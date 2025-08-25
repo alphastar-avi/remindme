@@ -1,0 +1,13 @@
+# Example Terraform variables file
+# Copy this to terraform.tfvars and update with your values
+
+resource_group_name = "reminder-app-rg"
+location = "East US"
+environment = "prod"
+app_name = "reminder-app"
+acr_name = "reminderappacr"  # Must be globally unique
+postgres_server_name = "reminder-postgres-server"  # Must be globally unique
+postgres_admin_username = "postgres"
+postgres_admin_password = "YourSecurePassword123!"  # Change this!
+postgres_database_name = "reminder_app"
+jwt_secret = "your-production-jwt-secret-key-change-me"  # Change this!

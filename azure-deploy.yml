@@ -1,0 +1,65 @@
+# Azure Container Apps deployment configuration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reminder-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: reminder-app
+  template:
+    metadata:
+      labels:
+        app: reminder-app
+    spec:
+      containers:
+      - name: backend
+        image: reminderapp.azurecr.io/reminder-backend:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: DB_HOST
+          value: "reminder-postgres.postgres.database.azure.com"
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: username
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: db-secret
+              key: password
+        - name: DB_NAME
+          value: "reminder_app"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: jwt-secret
+      - name: frontend
+        image: reminderapp.azurecr.io/reminder-frontend:latest
+        ports:
+        - containerPort: 80
+        env:
+        - name: REACT_APP_API_URL
+          value: "https://reminder-app.azurewebsites.net/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reminder-app-service
+spec:
+  selector:
+    app: reminder-app
+  ports:
+  - name: backend
+    port: 8080
+    targetPort: 8080
+  - name: frontend
+    port: 80
+    targetPort: 80
+  type: LoadBalancer

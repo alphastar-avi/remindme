@@ -132,13 +132,13 @@ const Reminders = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate('/groups')}
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-tokyo-bgHighlight/50 rounded-lg transition-colors duration-200"
             >
-              <ArrowLeft size={20} className="text-gray-600" />
+              <ArrowLeft size={20} className="text-white" />
             </button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{group?.name}</h1>
-              <p className="text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold gradient-text">{group?.name}</h1>
+              <p className="text-white/80 mt-1">
                 {reminders.length} reminder{reminders.length !== 1 ? 's' : ''}
               </p>
             </div>
@@ -151,9 +151,9 @@ const Reminders = () => {
             animate={{ opacity: 1 }}
             className="text-center py-12"
           >
-            <Clock size={64} className="mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-medium text-gray-900 mb-2">No reminders yet</h3>
-            <p className="text-gray-600 mb-6">Add your first reminder to get started</p>
+            <Clock size={64} className="mx-auto text-tokyo-comment mb-4" />
+            <h3 className="text-xl font-medium text-white mb-2">No reminders yet</h3>
+            <p className="text-white/80 mb-6">Add your first reminder to get started</p>
           </motion.div>
         ) : (
           <div className="space-y-4">
@@ -172,8 +172,8 @@ const Reminders = () => {
                       onClick={() => handleToggleComplete(reminder)}
                       className={`mt-1 p-1 rounded-full transition-colors duration-200 ${
                         reminder.completed 
-                          ? 'bg-green-100 text-green-600' 
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-400'
+                          ? 'bg-tokyo-green/20 text-tokyo-green' 
+                          : 'bg-tokyo-bgHighlight/50 hover:bg-tokyo-bgHighlight text-white/60'
                       }`}
                     >
                       <Check size={16} />
@@ -183,17 +183,17 @@ const Reminders = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h3 className={`font-medium ${
-                            reminder.completed ? 'line-through text-gray-500' : 'text-gray-900'
+                            reminder.completed ? 'line-through text-white/60' : 'text-white'
                           }`}>
                             {reminder.title}
                           </h3>
                           {reminder.description && (
-                            <p className="text-gray-600 mt-1 text-sm">
+                            <p className="text-white/80 mt-1 text-sm">
                               {reminder.description}
                             </p>
                           )}
                           
-                          <div className="flex items-center space-x-4 mt-3 text-sm text-gray-500">
+                          <div className="flex items-center space-x-4 mt-3 text-sm text-white/60">
                             <div className="flex items-center space-x-1">
                               <User size={14} />
                               <span>{reminder.creator?.username}</span>
@@ -201,13 +201,13 @@ const Reminders = () => {
                             {reminder.due_date && (
                               <div className={`flex items-center space-x-1 ${
                                 isOverdue(reminder.due_date) && !reminder.completed
-                                  ? 'text-red-600' 
+                                  ? 'text-tokyo-red' 
                                   : ''
                               }`}>
                                 <Calendar size={14} />
                                 <span>{formatDate(reminder.due_date)}</span>
                                 {isOverdue(reminder.due_date) && !reminder.completed && (
-                                  <span className="text-red-600 font-medium">(Overdue)</span>
+                                  <span className="text-tokyo-red font-medium">(Overdue)</span>
                                 )}
                               </div>
                             )}
@@ -216,7 +216,7 @@ const Reminders = () => {
                         
                         <button
                           onClick={() => handleDeleteReminder(reminder.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 transition-colors duration-200"
+                          className="p-2 text-white/60 hover:text-tokyo-red transition-colors duration-200"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -257,14 +257,14 @@ const Reminders = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white rounded-xl p-6 w-full max-w-md"
+              className="glass-card p-6 w-full max-w-md"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Add New Reminder</h2>
+              <h2 className="text-xl font-semibold text-white mb-4">Add New Reminder</h2>
               
               <form onSubmit={handleCreateReminder} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Title *
                   </label>
                   <input
@@ -279,7 +279,7 @@ const Reminders = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Description
                   </label>
                   <textarea
@@ -292,7 +292,7 @@ const Reminders = () => {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-white mb-2">
                     Due Date
                   </label>
                   <input

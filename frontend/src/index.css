@@ -9,11 +9,11 @@
   }
   
   body {
-    @apply bg-tokyo-bg text-tokyo-fg antialiased;
+    @apply bg-tokyo-bg text-white antialiased;
     background-image: 
-      radial-gradient(at 40% 20%, rgba(122, 162, 247, 0.05) 0px, transparent 50%),
-      radial-gradient(at 80% 0%, rgba(187, 154, 247, 0.05) 0px, transparent 50%),
-      radial-gradient(at 0% 50%, rgba(125, 207, 255, 0.05) 0px, transparent 50%);
+      radial-gradient(at 40% 20%, rgba(122, 162, 247, 0.03) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, rgba(187, 154, 247, 0.03) 0px, transparent 50%),
+      radial-gradient(at 0% 50%, rgba(125, 207, 255, 0.03) 0px, transparent 50%);
   }
 
   * {
@@ -40,46 +40,50 @@
 @layer components {
   .btn-primary {
     @apply bg-gradient-to-r from-tokyo-blue to-tokyo-cyan text-white font-medium py-3 px-6 rounded-2xl 
-           transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-xl hover:shadow-tokyo-blue/25
+           transition-all duration-200 ease-out transform hover:scale-[1.02] hover:shadow-xl hover:shadow-tokyo-blue/25
            focus:outline-none focus:ring-2 focus:ring-tokyo-blue focus:ring-offset-2 focus:ring-offset-tokyo-bg
            active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100;
   }
   
   .btn-secondary {
-    @apply bg-tokyo-bgHighlight/80 backdrop-blur-sm hover:bg-tokyo-bgHighlight text-tokyo-fg font-medium py-3 px-6 rounded-2xl 
-           transition-all duration-300 ease-out transform hover:scale-[1.02] border border-tokyo-border hover:border-tokyo-borderHighlight
+    @apply bg-tokyo-bgHighlight/80 backdrop-blur-sm hover:bg-tokyo-bgHighlight text-white font-medium py-3 px-6 rounded-2xl 
+           transition-all duration-200 ease-out transform hover:scale-[1.02] border border-tokyo-border hover:border-tokyo-borderHighlight
            focus:outline-none focus:ring-2 focus:ring-tokyo-borderHighlight focus:ring-offset-2 focus:ring-offset-tokyo-bg
            active:scale-[0.98];
   }
 
   .btn-danger {
     @apply bg-gradient-to-r from-tokyo-red to-tokyo-red1 text-white font-medium py-2 px-4 rounded-xl 
-           transition-all duration-300 ease-out transform hover:scale-[1.02] hover:shadow-lg hover:shadow-tokyo-red/25
+           transition-all duration-200 ease-out transform hover:scale-[1.02] hover:shadow-lg hover:shadow-tokyo-red/25
            focus:outline-none focus:ring-2 focus:ring-tokyo-red focus:ring-offset-2 focus:ring-offset-tokyo-bg
            active:scale-[0.98];
   }
   
   .input-field {
     @apply w-full px-4 py-3 bg-tokyo-bgHighlight/50 backdrop-blur-sm border border-tokyo-border rounded-2xl 
-           text-tokyo-fg placeholder-tokyo-comment transition-all duration-300 ease-out
-           focus:outline-none focus:ring-2 focus:ring-tokyo-blue focus:border-tokyo-blue focus:bg-tokyo-bgHighlight/80
-           hover:border-tokyo-borderHighlight hover:bg-tokyo-bgHighlight/60;
+           text-white placeholder-tokyo-comment focus:outline-none focus:ring-2 focus:ring-tokyo-blue 
+           focus:border-transparent transition-all duration-200 ease-out hover:bg-tokyo-bgHighlight/70;
   }
   
   .card {
     @apply bg-tokyo-bgHighlight/60 backdrop-blur-xl rounded-3xl border border-tokyo-border/50 p-6 
-           transition-all duration-500 ease-out transform hover:scale-[1.02] hover:bg-tokyo-bgHighlight/80
+           transition-all duration-300 ease-out transform hover:scale-[1.02] hover:bg-tokyo-bgHighlight/80
            hover:border-tokyo-borderHighlight hover:shadow-2xl hover:shadow-tokyo-blue/10;
   }
 
   .glass-card {
-    @apply bg-tokyo-bgHighlight/40 backdrop-blur-2xl rounded-3xl border border-tokyo-border/30 p-8
-           shadow-2xl shadow-tokyo-bgDark/50 transition-all duration-500 ease-out;
+    @apply bg-tokyo-bgHighlight/40 backdrop-blur-xl border border-tokyo-border/50 rounded-3xl shadow-2xl 
+           hover:bg-tokyo-bgHighlight/50 transition-all duration-300 ease-out;
+  }
+  
+  .glass-nav {
+    @apply bg-tokyo-bgHighlight/60 backdrop-blur-2xl border-b border-tokyo-border/30 
+           transition-all duration-300 ease-out;
   }
   
   .floating-button {
     @apply fixed bottom-8 right-8 bg-gradient-to-r from-tokyo-blue to-tokyo-cyan text-white p-4 rounded-2xl 
-           shadow-2xl shadow-tokyo-blue/30 transition-all duration-300 ease-out transform hover:scale-110 
+           shadow-2xl shadow-tokyo-blue/30 transition-all duration-200 ease-out transform hover:scale-110 
            hover:shadow-2xl hover:shadow-tokyo-blue/40 focus:outline-none focus:ring-2 focus:ring-tokyo-blue 
            focus:ring-offset-2 focus:ring-offset-tokyo-bg active:scale-95 animate-glow;
   }

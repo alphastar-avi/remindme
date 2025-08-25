@@ -21,7 +21,7 @@ const Layout = ({ children }) => {
             <motion.div
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               className="flex items-center space-x-3"
             >
               <div className="relative">
@@ -36,20 +36,20 @@ const Layout = ({ children }) => {
             <motion.div
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+              transition={{ duration: 0.4, ease: "easeOut", delay: 0.1 }}
               className="flex items-center space-x-6"
             >
               <div className="flex items-center space-x-3 bg-tokyo-bgHighlight/50 backdrop-blur-sm px-4 py-2 rounded-2xl border border-tokyo-border/50">
                 <div className="p-1.5 bg-gradient-to-r from-tokyo-green to-tokyo-teal rounded-full">
                   <User size={16} className="text-white" />
                 </div>
-                <span className="font-medium text-tokyo-fg">{user?.username}</span>
+                <span className="text-white font-medium">{user?.username}</span>
               </div>
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleLogout}
-                className="flex items-center space-x-2 text-tokyo-fgDark hover:text-tokyo-red transition-all duration-300 p-2 hover:bg-tokyo-bgHighlight/50 rounded-xl"
+                className="flex items-center space-x-2 text-white hover:text-tokyo-red transition-all duration-200 p-2 hover:bg-tokyo-bgHighlight/50 rounded-xl"
               >
                 <LogOut size={20} />
                 <span className="hidden sm:inline">Logout</span>
@@ -63,7 +63,7 @@ const Layout = ({ children }) => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
         >
           {children}
         </motion.div>

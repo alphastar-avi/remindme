@@ -79,8 +79,8 @@ const Groups = () => {
           className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         >
           <div>
-            <h1 className="text-4xl font-bold gradient-text mb-2">My Groups</h1>
-            <p className="text-tokyo-fgDark">Organize your reminders into groups</p>
+            <h2 className="text-3xl font-bold gradient-text">Your Groups</h2>
+            <p className="text-white/80 mt-2">Organize your reminders into groups</p>
           </div>
           <motion.button
             whileHover={{ scale: 1.05 }}

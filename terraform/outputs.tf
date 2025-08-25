@@ -26,11 +26,11 @@ output "backend_url" {
 
 output "frontend_url" {
   description = "Frontend application URL"
-  value       = "https://${azurerm_static_site.frontend.default_host_name}"
+  value       = "https://${azurerm_static_web_app.frontend.default_host_name}"
 }
 
 output "static_web_app_api_key" {
   description = "Static Web App deployment token"
-  value       = azurerm_static_site.frontend.api_key
+  value       = azurerm_static_web_app.frontend.api_key
   sensitive   = true
 }

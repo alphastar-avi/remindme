@@ -44,6 +44,7 @@ resource "azurerm_postgresql_flexible_server" "main" {
   version                = "16"
   delegated_subnet_id    = azurerm_subnet.postgres.id
   private_dns_zone_id    = azurerm_private_dns_zone.postgres.id
+  public_network_access_enabled = false
   administrator_login    = var.postgres_admin_username
   administrator_password = var.postgres_admin_password
   zone                   = "1"
@@ -242,10 +243,10 @@ resource "azurerm_container_app" "backend" {
 }
 
 # Static Web App for Frontend
-resource "azurerm_static_site" "frontend" {
+resource "azurerm_static_web_app" "frontend" {
   name                = "${var.app_name}-frontend"
   resource_group_name = azurerm_resource_group.main.name
-  location            = "East US2"  # Static Web Apps have limited regions
+  location            = "East Asia"  # Static Web Apps have limited regions
   sku_tier            = "Free"
   sku_size            = "Free"
 

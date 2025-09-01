@@ -19,9 +19,9 @@ func main() {
 	// Initialize Gin router
 	r := gin.Default()
 
-	// CORS middleware
+	// CORS middleware - updated for Azure Static Web App
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000", "https://*.azurewebsites.net"},
+		AllowOrigins:     []string{"http://localhost:3000", "https://black-moss-02ad4ed00-preview.eastasia.1.azurestaticapps.net", "https://*.azurestaticapps.net", "https://*.azurewebsites.net"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},

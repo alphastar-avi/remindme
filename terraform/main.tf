@@ -9,7 +9,7 @@ terraform {
 
 provider "azurerm" {
   features {}
-}
+} 
 
 # Resource Group
 resource "azurerm_resource_group" "main" {
@@ -99,6 +99,14 @@ resource "azurerm_subnet" "postgres" {
   }
 }
 
+# Subnet for Container Apps
+resource "azurerm_subnet" "container_apps" {
+  name                 = "container-apps-subnet"
+  resource_group_name  = azurerm_resource_group.main.name
+  virtual_network_name = azurerm_virtual_network.main.name
+  address_prefixes     = ["10.0.2.0/23"]
+}
+
 # Private DNS Zone for PostgreSQL
 resource "azurerm_private_dns_zone" "postgres" {
   name                = "${var.postgres_server_name}.private.postgres.database.azure.com"
@@ -129,6 +137,8 @@ resource "azurerm_container_app_environment" "main" {
   location                   = azurerm_resource_group.main.location
   resource_group_name        = azurerm_resource_group.main.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
+  infrastructure_subnet_id   = azurerm_subnet.container_apps.id
+  internal_load_balancer_enabled = false
 
   tags = {
     Environment = var.environment

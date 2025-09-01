@@ -19,8 +19,10 @@ func ConnectDatabase() {
 	password := getEnv("DB_PASSWORD", "password")
 	dbname := getEnv("DB_NAME", "reminder_app")
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=UTC",
-		host, user, password, dbname, port)
+	// Azure PostgreSQL requires SSL
+	sslmode := getEnv("DB_SSLMODrtE", "require")
+	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s TimeZone=UTC",
+		host, user, password, dbname, port, sslmode)
 
 	database, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {

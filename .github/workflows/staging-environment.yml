@@ -1,0 +1,103 @@
+name: Staging Environment
+
+on:
+  pull_request:
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'myapp-rg' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  ACR_NAME: ${{ vars.ACR_NAME || 'myappregistry' }}
+  APP_NAME: ${{ vars.APP_NAME || 'myapp' }}
+
+jobs:
+  # Deploy staging environment for PR
+  deploy-staging:
+    runs-on: ubuntu-latest
+    outputs:
+      staging_url: ${{ steps.deploy.outputs.staging_url }}
+      pr_number: ${{ github.event.number }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Create PR Environment
+      id: deploy
+      run: |
+        PR_NUM=${{ github.event.number }}
+        STAGING_NAME="${{ env.APP_NAME }}-pr-${PR_NUM}"
+        
+        # Create container app for this PR
+        az containerapp create \
+          --name ${STAGING_NAME}-backend \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+          --environment ${{ env.APP_NAME }}-staging-env \
+          --image ${{ env.ACR_NAME }}.azurecr.io/${{ env.APP_NAME }}-backend:latest \
+          --target-port 8080 \
+          --ingress external \
+          --registry-server ${{ env.ACR_NAME }}.azurecr.io \
+          --env-vars \
+            DB_HOST=${{ secrets.STAGING_DB_HOST }} \
+            DB_USER=${{ secrets.STAGING_DB_USER }} \
+            DB_PASSWORD=${{ secrets.STAGING_DB_PASSWORD }} \
+            DB_NAME=staging_${{ github.event.number }} \
+            DB_SSLMODE=require
+        
+        # Get staging URL
+        STAGING_URL=$(az containerapp show \
+          --name ${STAGING_NAME}-backend \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+          --query "properties.configuration.ingress.fqdn" -o tsv)
+        
+        echo "staging_url=https://${STAGING_URL}" >> $GITHUB_OUTPUT
+    
+    - name: Comment PR with Staging URL
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            issue_number: ${{ github.event.number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `🚀 **Staging Environment Ready**
+            
+            **Backend URL:** ${{ steps.deploy.outputs.staging_url }}
+            **Test Health:** \`curl ${{ steps.deploy.outputs.staging_url }}/health\`
+            
+            This environment will be automatically cleaned up when the PR is closed.`
+          })
+
+  # Cleanup staging when PR is closed
+  cleanup-staging:
+    runs-on: ubuntu-latest
+    if: github.event.action == 'closed'
+    
+    steps:
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Delete Staging Resources
+      run: |
+        PR_NUM=${{ github.event.number }}
+        STAGING_NAME="${{ env.APP_NAME }}-pr-${PR_NUM}"
+        
+        # Delete container app
+        az containerapp delete \
+          --name ${STAGING_NAME}-backend \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+          --yes
+        
+        # Drop staging database
+        az postgres flexible-server db delete \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-staging \
+          --server-name ${{ env.APP_NAME }}-staging-db \
+          --database-name staging_${{ github.event.number }} \
+          --yes

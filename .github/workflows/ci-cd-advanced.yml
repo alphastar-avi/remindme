@@ -1,0 +1,255 @@
+name: Advanced CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP || 'myapp-rg' }}
+  AZURE_LOCATION: ${{ vars.AZURE_LOCATION || 'eastus' }}
+  ACR_NAME: ${{ vars.ACR_NAME || 'myappregistry' }}
+  APP_NAME: ${{ vars.APP_NAME || 'myapp' }}
+
+jobs:
+  # Stage 1: Code Quality & Testing
+  quality-checks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    
+    # Frontend Quality Checks
+    - name: Install Frontend Dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Frontend Lint
+      working-directory: ./frontend
+      run: npm run lint
+    
+    - name: Frontend Tests
+      working-directory: ./frontend
+      run: npm test -- --coverage --watchAll=false
+    
+    - name: Frontend Build Test
+      working-directory: ./frontend
+      run: npm run build
+    
+    # Backend Quality Checks
+    - name: Backend Dependencies
+      working-directory: ./backend
+      run: go mod download
+    
+    - name: Backend Lint
+      working-directory: ./backend
+      run: |
+        go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+        golangci-lint run
+    
+    - name: Backend Tests
+      working-directory: ./backend
+      run: go test ./... -v -race -coverprofile=coverage.out
+    
+    - name: Backend Security Scan
+      working-directory: ./backend
+      run: |
+        go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
+        gosec ./...
+
+  # Stage 2: Infrastructure Deployment
+  infrastructure:
+    needs: quality-checks
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    outputs:
+      backend_url: ${{ steps.terraform.outputs.backend_url }}
+      frontend_url: ${{ steps.terraform.outputs.frontend_url }}
+      acr_login_server: ${{ steps.terraform.outputs.acr_login_server }}
+      static_web_app_token: ${{ steps.terraform.outputs.static_web_app_token }}
+      environment: ${{ steps.set-env.outputs.environment }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set Environment
+      id: set-env
+      run: |
+        if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          echo "environment=prod" >> $GITHUB_OUTPUT
+        else
+          echo "environment=staging" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.5.0
+        terraform_wrapper: false
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Terraform Init
+      working-directory: ./terraform
+      run: terraform init
+    
+    - name: Select Terraform Workspace
+      working-directory: ./terraform
+      run: |
+        terraform workspace select ${{ steps.set-env.outputs.environment }} || terraform workspace new ${{ steps.set-env.outputs.environment }}
+    
+    - name: Terraform Plan
+      working-directory: ./terraform
+      run: terraform plan -var="environment=${{ steps.set-env.outputs.environment }}"
+      env:
+        TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_PASSWORD }}
+        TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+    
+    - name: Terraform Apply
+      working-directory: ./terraform
+      run: terraform apply -auto-approve -var="environment=${{ steps.set-env.outputs.environment }}"
+      env:
+        TF_VAR_postgres_admin_password: ${{ secrets.POSTGRES_PASSWORD }}
+        TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
+    
+    - name: Get Terraform Outputs
+      id: terraform
+      working-directory: ./terraform
+      run: |
+        echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
+        echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
+        echo "acr_login_server=$(terraform output -raw container_registry_login_server)" >> $GITHUB_OUTPUT
+        echo "static_web_app_token=$(terraform output -raw static_web_app_api_key)" >> $GITHUB_OUTPUT
+
+  # Stage 3: Backend Deployment
+  deploy-backend:
+    needs: [quality-checks, infrastructure]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Azure Login
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+    
+    - name: Build and Push Backend Image
+      working-directory: ./backend
+      run: |
+        # Build with Git SHA and latest tags
+        az acr build --registry ${{ env.ACR_NAME }} \
+          --image ${{ env.APP_NAME }}-backend:${{ github.sha }} \
+          --image ${{ env.APP_NAME }}-backend:latest \
+          --image ${{ env.APP_NAME }}-backend:${{ needs.infrastructure.outputs.environment }} \
+          --platform linux/amd64 \
+          .
+    
+    - name: Update Container App
+      run: |
+        az containerapp update \
+          --name ${{ env.APP_NAME }}-backend \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }}-${{ needs.infrastructure.outputs.environment }} \
+          --image ${{ needs.infrastructure.outputs.acr_login_server }}/${{ env.APP_NAME }}-backend:${{ github.sha }}
+
+  # Stage 4: Frontend Deployment
+  deploy-frontend:
+    needs: [quality-checks, infrastructure, deploy-backend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Install Dependencies
+      working-directory: ./frontend
+      run: npm ci
+    
+    - name: Build Frontend
+      working-directory: ./frontend
+      env:
+        REACT_APP_API_URL: ${{ needs.infrastructure.outputs.backend_url }}/api
+        REACT_APP_ENVIRONMENT: ${{ needs.infrastructure.outputs.environment }}
+      run: npm run build
+    
+    - name: Deploy to Static Web App
+      uses: Azure/static-web-apps-deploy@v1
+      with:
+        azure_static_web_apps_api_token: ${{ needs.infrastructure.outputs.static_web_app_token }}
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        action: "upload"
+        app_location: "./frontend"
+        output_location: "build"
+        skip_app_build: true
+
+  # Stage 5: Integration Tests
+  integration-tests:
+    needs: [deploy-backend, deploy-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Wait for Deployment
+      run: sleep 60  # Give services time to start
+    
+    - name: Test Backend Health
+      run: |
+        curl -f ${{ needs.infrastructure.outputs.backend_url }}/health || exit 1
+    
+    - name: Test CORS Configuration
+      run: |
+        curl -X OPTIONS \
+          -H "Origin: ${{ needs.infrastructure.outputs.frontend_url }}" \
+          -H "Access-Control-Request-Method: POST" \
+          -H "Access-Control-Request-Headers: Content-Type" \
+          ${{ needs.infrastructure.outputs.backend_url }}/api/auth/login \
+          -f || exit 1
+    
+    - name: Smoke Test Frontend
+      run: |
+        curl -f ${{ needs.infrastructure.outputs.frontend_url }} || exit 1
+
+  # Stage 6: Notification
+  notify:
+    needs: [integration-tests]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+    - name: Notify Success
+      if: needs.integration-tests.result == 'success'
+      run: |
+        echo "✅ Deployment successful!"
+        echo "Frontend: ${{ needs.infrastructure.outputs.frontend_url }}"
+        echo "Backend: ${{ needs.infrastructure.outputs.backend_url }}"
+    
+    - name: Notify Failure
+      if: needs.integration-tests.result == 'failure'
+      run: |
+        echo "❌ Deployment failed!"
+        exit 1

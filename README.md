@@ -1,6 +1,6 @@
 # Reminder App
 
-A modern reminder application with React frontend and Go backend, designed for Azure deployment.
+A simple reminder application with React frontend and Go backend, designed for Azure deployment.
 
 <img width="1453" height="1029" alt="Screenshot 2025-09-01 at 2 37 36 PM" src="https://github.com/user-attachments/assets/53f0af02-8bf2-40fb-85d2-a761df16a97c" />
 <img width="1453" height="1029" alt="Screenshot 2025-09-01 at 2 38 01 PM" src="https://github.com/user-attachments/assets/0d1c1fe3-511c-4a38-a002-c3cae19b4b0d" />
